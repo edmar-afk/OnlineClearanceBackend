@@ -49,6 +49,12 @@ class ClearanceSignature(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='clearance_signature')
     clearance = models.ForeignKey(StudentClearance, on_delete=models.CASCADE)
     programs = models.ForeignKey(Programs, on_delete=models.CASCADE, related_name='clearance_signature')
+    receipt = models.FileField(
+        upload_to='receipts/',
+        validators=[FileExtensionValidator(allowed_extensions=['png', 'jpeg', 'jpg'])],
+        null=True,
+        blank=True
+    )
     signature = models.ForeignKey(
         Signature,
         on_delete=models.CASCADE,

@@ -23,11 +23,16 @@ urlpatterns = [
     path('student-clearance/<int:student_id>/', views.StudentClearanceByStudentView.as_view(), name='student-clearance-by-student'),
     path('student-clearances/', views.StudentClearanceListView.as_view(), name='student-clearance-list'),
     path("student-clearances/<int:pk>/update-status/", views.UpdateStudentClearanceStatus.as_view(), name="update-student-clearance-status"),
-    
+    path('students/count/', views.StudentCountView.as_view(), name='student-count'),
     
     path('clearance-signatures/', views.ClearanceSignatureListView.as_view(), name='clearance-signatures'),
     path('clearance-signatures/create/<int:student_id>/<int:program_id>/', views.ClearanceSignatureCreateView.as_view(), name='create-clearance-signature'),
     path('clearance-signatures/status/<int:student_id>/<int:program_id>/', views.GetClearanceSignatureView.as_view(), name='get-clearance-signature'),
     path('clearance-signatures/<int:signature_id>/update-status/', views.UpdateClearanceSignatureStatusView.as_view()),
+    path(
+    'clearance-signatures/<str:program_name>/<str:last_name>/<str:year_level>/',
+    views.ClearanceSignatureByParamsView.as_view(),
+    name='clearance-signatures-by-params'
+)
 
 ]

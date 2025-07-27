@@ -6,7 +6,8 @@ from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
-
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.db.models import Q
 
 class GetUserByIdView(APIView):
     permission_classes = [AllowAny]  # ✅ Works in class-based views like this
@@ -188,6 +189,7 @@ class UpdateStudentClearanceStatus(APIView):
     
 class ClearanceSignatureCreateView(APIView):
     permission_classes = [AllowAny]
+    parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request, student_id, program_id):
         try:
@@ -199,7 +201,6 @@ class ClearanceSignatureCreateView(APIView):
             return Response({"error": "Program not found."}, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            # Find the latest StudentClearance for this student
             student_clearance = StudentClearance.objects.filter(student=student).latest('id')
         except StudentClearance.DoesNotExist:
             return Response({"error": "Student clearance not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -212,13 +213,16 @@ class ClearanceSignatureCreateView(APIView):
             except Signature.DoesNotExist:
                 return Response({"error": "Signature not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        receipt = request.FILES.get("receipt")  
+
         clearance_signature = ClearanceSignature.objects.create(
             student=student,
             clearance=student_clearance,
             programs=program,
             signature=signature,
             status=request.data.get("status", "Pending"),
-            feedback=request.data.get("feedback", "")
+            feedback=request.data.get("feedback", ""),
+            receipt=receipt
         )
 
         serializer = ClearanceSignatureSerializer(clearance_signature)
@@ -291,3 +295,28 @@ class UpdateClearanceSignatureStatusView(APIView):
             "status": clearance_signature.status,
             "signature_id": clearance_signature.signature.id if clearance_signature.signature else None
         }, status=status.HTTP_200_OK)
+        
+
+class StudentCountView(APIView):
+    permission_classes = [AllowAny]  # Optional: Require auth
+
+    def get(self, request):
+        student_count = User.objects.filter(is_superuser=False, is_staff=False).count()
+        return Response({'student_count': student_count})
+    
+    
+class ClearanceSignatureByParamsView(APIView):
+    permission_classes = [AllowAny]  # Optional: Require auth
+    def get(self, request, program_name, last_name, year_level):
+        filters = Q()
+
+        if program_name != 'none':
+            filters &= Q(programs__program_name__icontains=program_name)
+        if last_name != 'none':
+            filters &= Q(student__last_name__icontains=last_name)
+        if year_level != 'none':
+            filters &= Q(student__student_profile__year_level__icontains=year_level)
+
+        queryset = ClearanceSignature.objects.filter(filters)
+        serializer = ClearanceSignatureSerializer(queryset, many=True)
+        return Response(serializer.data)
