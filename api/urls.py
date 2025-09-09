@@ -29,10 +29,13 @@ urlpatterns = [
     path('clearance-signatures/create/<int:student_id>/<int:program_id>/', views.ClearanceSignatureCreateView.as_view(), name='create-clearance-signature'),
     path('clearance-signatures/status/<int:student_id>/<int:program_id>/', views.GetClearanceSignatureView.as_view(), name='get-clearance-signature'),
     path('clearance-signatures/<int:signature_id>/update-status/', views.UpdateClearanceSignatureStatusView.as_view()),
-    path(
-    'clearance-signatures/<str:program_name>/<str:last_name>/<str:year_level>/',
-    views.ClearanceSignatureByParamsView.as_view(),
-    name='clearance-signatures-by-params'
-)
+    path('clearance-signatures/<str:program_name>/<str:last_name>/<str:year_level>/', views.ClearanceSignatureByParamsView.as_view(), name='clearance-signatures-by-params'),
+    
+    path("feedback/<int:program_id>/<int:user_id>/", views.LatestFeedbackView.as_view(), name="latest-feedback"),
+    
+    path("notifications/<int:user_id>/", views.UserNotificationsView.as_view(), name="user-notifications"),
 
+    path("clearance-signatures/update/<int:id>/", views.UpdateClearanceSignatureView.as_view(), name="update-clearance-signature"),
+    
+    path("users/by-first-name/<str:first_name>/", views.UserByFirstNameView.as_view(), name="user-by-first-name"),
 ]

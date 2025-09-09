@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Programs, Clearance, Signature, Student, ClearanceSignature
+from .models import Programs, Clearance, Signature, Student, ClearanceSignature, Notification
 
 admin.site.register(Student)
 class StudentAdmin(admin.ModelAdmin):
@@ -9,3 +9,5 @@ admin.site.register(Programs)
 admin.site.register(Clearance)
 admin.site.register(Signature)
 admin.site.register(ClearanceSignature)
+admin.site.register(Notification)
+

@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Programs, Signature, Student, Clearance, StudentClearance, ClearanceSignature
+from .models import Programs, Signature, Student, Clearance, StudentClearance, ClearanceSignature, Notification
 from django.contrib.auth.models import User
 
         
@@ -101,3 +101,42 @@ class ClearanceSignatureSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClearanceSignature
         fields = '__all__'
+        
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source="student.username", read_only=True)
+    program_name = serializers.CharField(source="programs.name", read_only=True)
+
+    class Meta:
+        model = ClearanceSignature
+        fields = ["id", "student", "student_name", "programs", "program_name", "status", "feedback"]
+        
+        
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ["id", "user", "title", "message", "created_at"]
+        
+
+class ClearanceSignatureUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClearanceSignature
+        fields = ["id", "receipt", "status", "feedback"]
+
+    def update(self, instance, validated_data):
+        # If receipt is uploaded again, reset status to Pending
+        if "receipt" in validated_data:
+            instance.receipt = validated_data["receipt"]
+            instance.status = "Pending"
+            instance.feedback = ""  # clear old feedback if needed
+
+        # Allow updating feedback/status only if explicitly passed
+        if "status" in validated_data:
+            instance.status = validated_data["status"]
+        if "feedback" in validated_data:
+            instance.feedback = validated_data["feedback"]
+
+        instance.save()
+        return instance

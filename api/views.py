@@ -1,7 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
-from .models import Programs, Signature, Student, Clearance, StudentClearance, ClearanceSignature
-from .serializers import ClearanceSignatureSerializer, StudentClearanceSerializer, ClearanceCreateSerializer, ProgramsSerializer, ClearanceSerializer, UserRegistrationSerializer, SignatureSerializer, UserSerializer, StudentSerializer
+from .models import Programs, Signature, Student, Clearance, StudentClearance, ClearanceSignature, Notification
+from .serializers import NotificationSerializer, FeedbackSerializer, ClearanceSignatureSerializer, ClearanceSignatureUpdateSerializer, StudentClearanceSerializer, ClearanceCreateSerializer, ProgramsSerializer, ClearanceSerializer, UserRegistrationSerializer, SignatureSerializer, UserSerializer, StudentSerializer
 from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -271,6 +271,7 @@ class UpdateClearanceSignatureStatusView(APIView):
 
         new_status = request.data.get("status")
         staff_id = request.data.get("staffId")
+        feedback = request.data.get("feedback")  # ✅ get reason
 
         if new_status not in ["Approved", "Pending", "Rejected"]:
             return Response({"error": "Invalid status."}, status=status.HTTP_400_BAD_REQUEST)
@@ -287,8 +288,18 @@ class UpdateClearanceSignatureStatusView(APIView):
             if clearance_signature.signature != staff_signature:
                 clearance_signature.signature = staff_signature
 
+        if new_status == "Rejected" and feedback:  # ✅ save reason
+            clearance_signature.feedback = feedback
+
         clearance_signature.status = new_status
         clearance_signature.save()
+
+        return Response({
+            "message": "ClearanceSignature updated successfully.",
+            "status": clearance_signature.status,
+            "feedback": clearance_signature.feedback,  # ✅ return reason too
+            "signature_id": clearance_signature.signature.id if clearance_signature.signature else None
+        }, status=status.HTTP_200_OK)
 
         return Response({
             "message": "ClearanceSignature updated successfully.",
@@ -320,3 +331,68 @@ class ClearanceSignatureByParamsView(APIView):
         queryset = ClearanceSignature.objects.filter(filters)
         serializer = ClearanceSignatureSerializer(queryset, many=True)
         return Response(serializer.data)
+    
+    
+class LatestFeedbackView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, program_id, user_id):
+        feedback = (ClearanceSignature.objects
+                    .filter(programs_id=program_id, student_id=user_id)
+                    .exclude(feedback__isnull=True)
+                    .exclude(feedback__exact="")
+                    .order_by("-id")
+                    .first())
+        
+        if not feedback:
+            return Response({"message": "No feedback found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = FeedbackSerializer(feedback)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+
+
+class UserNotificationsView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        notifications = Notification.objects.filter(user=user).order_by("-created_at")
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data.copy()
+        data["user"] = user.id
+        serializer = NotificationSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+class UpdateClearanceSignatureView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
+    queryset = ClearanceSignature.objects.all()
+    serializer_class = ClearanceSignatureUpdateSerializer
+    lookup_field = "id"
+    
+
+
+class UserByFirstNameView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, first_name):
+        try:
+            user = User.objects.get(first_name=first_name)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
