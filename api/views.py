@@ -68,6 +68,7 @@ class StudentDetailByUserIdView(APIView):
             return Response({"error": "Student profile not found."}, status=status.HTTP_404_NOT_FOUND)
         
         
+        
 class ClearanceListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     queryset = Clearance.objects.all()
