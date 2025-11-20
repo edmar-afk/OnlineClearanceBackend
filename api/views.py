@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q
-
+from itertools import chain
 class GetUserByIdView(APIView):
     permission_classes = [AllowAny]  # ✅ Works in class-based views like this
 
@@ -29,7 +29,7 @@ class ProgramsListAPIView(generics.ListAPIView):
 class RegisterUserAPIView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
-    permission_classes = [AllowAny] 
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -37,14 +37,14 @@ class RegisterUserAPIView(generics.CreateAPIView):
             serializer.save()
             return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
 
 class SignatureUploadView(generics.CreateAPIView):
     queryset = Signature.objects.all()
     serializer_class = SignatureSerializer
 
 
-    
+
 class SignatureDetailView(APIView):
     permission_classes = [AllowAny]
 
@@ -55,7 +55,7 @@ class SignatureDetailView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Signature.DoesNotExist:
             return Response({'detail': 'No signature found for this staff.'}, status=status.HTTP_404_NOT_FOUND)
-        
+
 
 class StudentDetailByUserIdView(APIView):
     permission_classes = [AllowAny]
@@ -66,29 +66,29 @@ class StudentDetailByUserIdView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Student.DoesNotExist:
             return Response({"error": "Student profile not found."}, status=status.HTTP_404_NOT_FOUND)
-        
-        
-        
+
+
+
 class ClearanceListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     queryset = Clearance.objects.all()
     serializer_class = ClearanceSerializer
-    
-    
+
+
 class LatestClearanceView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
         latest_clearance = Clearance.objects.order_by('-created_at').first()
         if not latest_clearance:
             return Response({'detail': 'No clearance found.'}, status=status.HTTP_404_NOT_FOUND)
-        
+
         serializer = ClearanceSerializer(latest_clearance)
-        return Response(serializer.data, status=status.HTTP_200_OK)    
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ClearanceCreateView(APIView):
     permission_classes = [AllowAny]
-    
+
     def post(self, request):
         serializer = ClearanceCreateSerializer(data=request.data)
         if serializer.is_valid():
@@ -98,10 +98,10 @@ class ClearanceCreateView(APIView):
                 'clearance': ClearanceCreateSerializer(clearance).data
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
 class ClearanceDetailView(APIView):
     permission_classes = [AllowAny]
-    
+
     def get(self, request, id):
         try:
             clearance = Clearance.objects.get(id=id)
@@ -109,8 +109,8 @@ class ClearanceDetailView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Clearance.DoesNotExist:
             return Response({'error': 'Clearance not found'}, status=status.HTTP_404_NOT_FOUND)
-        
-        
+
+
 class RequestLatestClearanceView(APIView):
     permission_classes = [AllowAny]
 
@@ -136,8 +136,8 @@ class RequestLatestClearanceView(APIView):
         )
         serializer = StudentClearanceSerializer(student_clearance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    
+
+
 class StudentClearanceByStudentView(APIView):
     permission_classes = [AllowAny]
 
@@ -162,14 +162,14 @@ class StudentClearanceByStudentView(APIView):
 
 
 class StudentClearanceListView(APIView):
-    permission_classes = [AllowAny]  
+    permission_classes = [AllowAny]
 
     def get(self, request):
         student_clearances = StudentClearance.objects.select_related('student', 'clearance').order_by('-clearance__created_at')
         serializer = StudentClearanceSerializer(student_clearances, many=True)
         return Response(serializer.data)
-    
-    
+
+
 class UpdateStudentClearanceStatus(APIView):
     permission_classes = [AllowAny]
 
@@ -186,8 +186,8 @@ class UpdateStudentClearanceStatus(APIView):
         clearance.status = new_status
         clearance.save()
         return Response(StudentClearanceSerializer(clearance).data)
-    
-    
+
+
 class ClearanceSignatureCreateView(APIView):
     permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser]
@@ -214,7 +214,7 @@ class ClearanceSignatureCreateView(APIView):
             except Signature.DoesNotExist:
                 return Response({"error": "Signature not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        receipt = request.FILES.get("receipt")  
+        receipt = request.FILES.get("receipt")
 
         clearance_signature = ClearanceSignature.objects.create(
             student=student,
@@ -229,7 +229,7 @@ class ClearanceSignatureCreateView(APIView):
         serializer = ClearanceSignatureSerializer(clearance_signature)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    
+
 
 class GetClearanceSignatureView(APIView):
     permission_classes = [AllowAny]
@@ -250,8 +250,8 @@ class GetClearanceSignatureView(APIView):
 
         serializer = ClearanceSignatureSerializer(signature)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    
+
+
 class ClearanceSignatureListView(APIView):
     permission_classes = [AllowAny]
 
@@ -259,8 +259,8 @@ class ClearanceSignatureListView(APIView):
         signatures = ClearanceSignature.objects.all()
         serializer = ClearanceSignatureSerializer(signatures, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    
+
+
 class UpdateClearanceSignatureStatusView(APIView):
     permission_classes = [AllowAny]
 
@@ -307,7 +307,7 @@ class UpdateClearanceSignatureStatusView(APIView):
             "status": clearance_signature.status,
             "signature_id": clearance_signature.signature.id if clearance_signature.signature else None
         }, status=status.HTTP_200_OK)
-        
+
 
 class StudentCountView(APIView):
     permission_classes = [AllowAny]  # Optional: Require auth
@@ -315,8 +315,8 @@ class StudentCountView(APIView):
     def get(self, request):
         student_count = User.objects.filter(is_superuser=False, is_staff=False).count()
         return Response({'student_count': student_count})
-    
-    
+
+
 class ClearanceSignatureByParamsView(APIView):
     permission_classes = [AllowAny]  # Optional: Require auth
     def get(self, request, program_name, last_name, year_level):
@@ -332,8 +332,42 @@ class ClearanceSignatureByParamsView(APIView):
         queryset = ClearanceSignature.objects.filter(filters)
         serializer = ClearanceSignatureSerializer(queryset, many=True)
         return Response(serializer.data)
-    
-    
+
+class IronClubSignatureByParamsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        program_name = "Club Treasurer"  # NO Iron Club
+
+        # Always filter BIT students
+        filters = Q(programs__program_name__icontains=program_name) & \
+                  Q(student__last_name__icontains="BIT")
+
+        queryset = ClearanceSignature.objects.filter(filters)
+        serializer = ClearanceSignatureSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class FuelClubSignatureByParamsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        program_name = "Club Treasurer"
+
+        filters = [
+            Q(programs__program_name__icontains=program_name) & Q(student__last_name__icontains=ln)
+            for ln in ["BTVTED-FSM", "BTLED-AP", "BTLED-HE"]
+        ]
+
+        queryset = ClearanceSignature.objects.filter(filters[0] | filters[1] | filters[2])
+        serializer = ClearanceSignatureSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+
+
+
+
 class LatestFeedbackView(APIView):
     permission_classes = [AllowAny]
     def get(self, request, program_id, user_id):
@@ -343,13 +377,13 @@ class LatestFeedbackView(APIView):
                     .exclude(feedback__exact="")
                     .order_by("-id")
                     .first())
-        
+
         if not feedback:
             return Response({"message": "No feedback found."}, status=status.HTTP_404_NOT_FOUND)
-        
+
         serializer = FeedbackSerializer(feedback)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
 
 
 
@@ -378,14 +412,14 @@ class UserNotificationsView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
+
 class UpdateClearanceSignatureView(generics.UpdateAPIView):
     permission_classes = [AllowAny]
     queryset = ClearanceSignature.objects.all()
     serializer_class = ClearanceSignatureUpdateSerializer
     lookup_field = "id"
-    
+
 
 
 class UserByFirstNameView(APIView):
@@ -397,3 +431,93 @@ class UserByFirstNameView(APIView):
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+class UpdateIronClubSignatureStatusView(APIView):
+    permission_classes = [AllowAny]
+
+    def patch(self, request, signature_id):
+        try:
+            clearance_signature = ClearanceSignature.objects.get(
+                id=signature_id,
+                programs__program_name__icontains="Club Treasurer"
+            )
+        except ClearanceSignature.DoesNotExist:
+            return Response({"error": "Iron Club ClearanceSignature not found."}, status=404)
+
+        new_status = request.data.get("status")
+        staff_id = request.data.get("staffId")
+        feedback = request.data.get("feedback")
+
+        if new_status not in ["Approved", "Pending", "Rejected"]:
+            return Response({"error": "Invalid status."}, status=400)
+
+        if new_status == "Approved":
+            if not staff_id:
+                return Response({"error": "staffId is required when approving."}, status=400)
+            try:
+                staff_signature = Signature.objects.get(staff__id=staff_id)
+                clearance_signature.signature = staff_signature
+            except Signature.DoesNotExist:
+                return Response({"error": "Staff signature not found."}, status=404)
+
+        if new_status == "Rejected" and feedback:
+            clearance_signature.feedback = feedback
+
+        clearance_signature.status = new_status
+        clearance_signature.save()
+
+        return Response({
+            "message": "Iron Club ClearanceSignature updated successfully.",
+            "status": clearance_signature.status,
+            "feedback": clearance_signature.feedback,
+            "signature_id": clearance_signature.signature.id if clearance_signature.signature else None
+        }, status=200)
+
+
+
+class UpdateFuelClubSignatureStatusView(APIView):
+    permission_classes = [AllowAny]
+
+    def patch(self, request, signature_id):
+        allowed_programs = ["BTVTED-FSM", "BTLED-AP", "BTLED-HE"]
+
+        try:
+            clearance_signature = ClearanceSignature.objects.get(
+                id=signature_id,
+                programs__program_name__icontains="Club Treasurer",
+                student__student_profile__course__in=allowed_programs
+            )
+        except ClearanceSignature.DoesNotExist:
+            return Response({"error": "Fuel Club ClearanceSignature not found."}, status=404)
+
+        new_status = request.data.get("status")
+        staff_id = request.data.get("staffId")
+        feedback = request.data.get("feedback")
+
+        if new_status not in ["Approved", "Pending", "Rejected"]:
+            return Response({"error": "Invalid status."}, status=400)
+
+        if new_status == "Approved":
+            if not staff_id:
+                return Response({"error": "staffId is required when approving."}, status=400)
+            try:
+                staff_signature = Signature.objects.get(staff__id=staff_id)
+                clearance_signature.signature = staff_signature
+            except Signature.DoesNotExist:
+                return Response({"error": "Staff signature not found."}, status=404)
+
+        if new_status == "Rejected" and feedback:
+            clearance_signature.feedback = feedback
+
+        clearance_signature.status = new_status
+        clearance_signature.save()
+
+        return Response({
+            "message": "Fuel Club ClearanceSignature updated successfully.",
+            "status": clearance_signature.status,
+            "feedback": clearance_signature.feedback,
+            "signature_id": clearance_signature.signature.id if clearance_signature.signature else None
+        }, status=200)
