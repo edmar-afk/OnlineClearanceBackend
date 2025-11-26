@@ -39,5 +39,7 @@ urlpatterns = [
 
     path("users/by-first-name/<str:first_name>/", views.UserByFirstNameView.as_view(), name="user-by-first-name"),
 
-    path('clearance/iron-club/', views.IronClubSignatureView.as_view(), name='iron-club-clearance'),
+    path('clearance/iron-club/', views.IronClubSignatureByParamsView.as_view(), name='iron-club-clearance'),
+    path('clearance/<int:id>/', views.ClearanceDetailAPIView.as_view(), name='clearance-detail'),
+
 ]

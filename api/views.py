@@ -521,3 +521,11 @@ class UpdateFuelClubSignatureStatusView(APIView):
             "feedback": clearance_signature.feedback,
             "signature_id": clearance_signature.signature.id if clearance_signature.signature else None
         }, status=200)
+        
+        
+class ClearanceDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
+    
+    queryset = Clearance.objects.all()
+    serializer_class = ClearanceSerializer
+    lookup_field = 'id'
