@@ -27,7 +27,12 @@ urlpatterns = [
 
     path('clearance-signatures/', views.ClearanceSignatureListView.as_view(), name='clearance-signatures'),
     path('clearance-signatures/create/<int:student_id>/<int:program_id>/', views.ClearanceSignatureCreateView.as_view(), name='create-clearance-signature'),
-    path('clearance-signatures/status/<int:student_id>/<int:program_id>/', views.GetClearanceSignatureView.as_view(), name='get-clearance-signature'),
+    path(
+    'clearance-signatures/status/<int:clearance_id>/<int:student_id>/<int:program_id>/',
+    views.GetClearanceSignatureView.as_view(),
+    name='get-clearance-signature'
+),
+
     path('clearance-signatures/<int:signature_id>/update-status/', views.UpdateClearanceSignatureStatusView.as_view()),
     path('clearance-signatures/<str:program_name>/<str:last_name>/<str:year_level>/', views.ClearanceSignatureByParamsView.as_view(), name='clearance-signatures-by-params'),
 
@@ -40,6 +45,25 @@ urlpatterns = [
     path("users/by-first-name/<str:first_name>/", views.UserByFirstNameView.as_view(), name="user-by-first-name"),
 
     path('clearance/iron-club/', views.IronClubSignatureByParamsView.as_view(), name='iron-club-clearance'),
+
+    path(
+        "clearance/iron-club/<int:signature_id>/update-status/",
+        views.UpdateIronClubSignatureStatusView.as_view(),
+        name="update-iron-club-status"
+    ),
+
+    path(
+        'clearance/fuel-club/',
+        views.FuelClubSignatureByParamsView.as_view(),
+        name='fuel-club-clearance'
+    ),
+
+    path(
+        'clearance/fuel-club/<int:signature_id>/update-status/',
+        views.UpdateFuelClubSignatureStatusView.as_view(),
+        name='update-fuel-club-status'
+    ),
+
     path('clearance/<int:id>/', views.ClearanceDetailAPIView.as_view(), name='clearance-detail'),
 
 ]

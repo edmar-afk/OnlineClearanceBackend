@@ -234,7 +234,7 @@ class ClearanceSignatureCreateView(APIView):
 class GetClearanceSignatureView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, student_id, program_id):
+    def get(self, request, clearance_id, student_id, program_id):
         try:
             student = User.objects.get(id=student_id)
             program = Programs.objects.get(id=program_id)
@@ -243,13 +243,16 @@ class GetClearanceSignatureView(APIView):
         except Programs.DoesNotExist:
             return Response({"error": "Program not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        signature = ClearanceSignature.objects.filter(student=student, programs=program).first()
+        signature = ClearanceSignature.objects.filter(
+            student=student, programs=program, clearance_id=clearance_id
+        ).first()
 
         if not signature:
             return Response({"message": "No signature yet"}, status=status.HTTP_200_OK)
 
         serializer = ClearanceSignatureSerializer(signature)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class ClearanceSignatureListView(APIView):
@@ -482,13 +485,10 @@ class UpdateFuelClubSignatureStatusView(APIView):
     permission_classes = [AllowAny]
 
     def patch(self, request, signature_id):
-        allowed_programs = ["BTVTED-FSM", "BTLED-AP", "BTLED-HE"]
-
         try:
             clearance_signature = ClearanceSignature.objects.get(
                 id=signature_id,
-                programs__program_name__icontains="Club Treasurer",
-                student__student_profile__course__in=allowed_programs
+                programs__program_name__icontains="Club Treasurer"
             )
         except ClearanceSignature.DoesNotExist:
             return Response({"error": "Fuel Club ClearanceSignature not found."}, status=404)
@@ -521,11 +521,12 @@ class UpdateFuelClubSignatureStatusView(APIView):
             "feedback": clearance_signature.feedback,
             "signature_id": clearance_signature.signature.id if clearance_signature.signature else None
         }, status=200)
-        
-        
+
+
+
 class ClearanceDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [AllowAny]
-    
+
     queryset = Clearance.objects.all()
     serializer_class = ClearanceSerializer
     lookup_field = 'id'

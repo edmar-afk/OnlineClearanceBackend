@@ -3,19 +3,19 @@ from rest_framework import serializers
 from .models import Programs, Signature, Student, Clearance, StudentClearance, ClearanceSignature, Notification
 from django.contrib.auth.models import User
 
-        
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser']
-        
+
 class StudentSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
         model = Student
         fields = ['user', 'year_level', 'major']
-        
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     first_name = serializers.CharField(required=True)
@@ -35,7 +35,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         Student.objects.create(user=user, year_level=year_level, major=major)
         return user
 
-    
+
 class ProgramsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Programs
@@ -68,7 +68,7 @@ class ClearanceSerializer(serializers.ModelSerializer):
         model = Clearance
         fields = ['id', 'programs', 'created_at', 'updated_at', 'semester', 'academic_year']
 
-        
+
 
 class ClearanceCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -83,7 +83,7 @@ class ClearanceCreateSerializer(serializers.ModelSerializer):
 
 
 class StudentClearanceSerializer(serializers.ModelSerializer):
-    student = UserSerializer()  # 👈 
+    student = UserSerializer()  # 👈
     clearance = ClearanceSerializer()
 
     class Meta:
@@ -94,14 +94,14 @@ class StudentClearanceSerializer(serializers.ModelSerializer):
 
 
 class ClearanceSignatureSerializer(serializers.ModelSerializer):
-    student = UserSerializer()  # 👈 
+    student = UserSerializer()  # 👈
     programs = ProgramsSerializer()
     signature = SignatureSerializer()
     clearance = StudentClearanceSerializer()
     class Meta:
         model = ClearanceSignature
         fields = '__all__'
-        
+
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
@@ -111,14 +111,14 @@ class FeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClearanceSignature
         fields = ["id", "student", "student_name", "programs", "program_name", "status", "feedback"]
-        
-        
+
+
 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = ["id", "user", "title", "message", "created_at"]
-        
+
 
 class ClearanceSignatureUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -140,3 +140,5 @@ class ClearanceSignatureUpdateSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
